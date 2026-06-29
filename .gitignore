@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Cloudflare Wrangler local state & configs
+.wrangler/
+.dev.vars
+
+# Logs and system files
+*.log
+.system_generated/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
