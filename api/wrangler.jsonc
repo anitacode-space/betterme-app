@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "betterme-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-01-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "betterme-db",
+      "database_id": "116afde7-ce4c-4dca-9652-164df543973d"
+    }
+  ]
+}

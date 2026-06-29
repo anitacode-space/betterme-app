@@ -1,0 +1,15 @@
+{
+  "name": "betterme-app",
+  "version": "1.0.0",
+  "description": "BetterMe Self-Improvement PWA",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "pwa",
+    "self-improvement",
+    "habit-tracker"
+  ],
+  "author": "",
+  "license": "ISC"
+}

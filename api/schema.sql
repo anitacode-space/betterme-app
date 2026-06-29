@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  text TEXT NOT NULL,
+  type TEXT NOT NULL,
+  completed INTEGER DEFAULT 0,
+  timestamp TEXT
+);
+
+CREATE TABLE IF NOT EXISTS kpis (
+  date TEXT PRIMARY KEY,
+  score INTEGER DEFAULT 0
+);

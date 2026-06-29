@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>BetterMe — Daily Habits & Growth Tracker</title>
+  
+  <!-- SEO & PWA Meta Tags -->
+  <meta name="description" content="BetterMe is an ultra-modern, clean, and minimal self-improvement application to track your daily habits and visual growth over time.">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BetterMe">
+  
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            title: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            stone: {
+              50: '#fafaf9',
+              100: '#f5f5f4',
+              200: '#e7e5e4',
+              300: '#d6d3d1',
+              400: '#a8a29e',
+              500: '#78716c',
+              900: '#1c1917',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom Styles overriding / extending Tailwind -->
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- Lucide Icons (modern, lightweight icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex justify-center min-h-screen px-4 py-6 md:py-12 select-none">
+
+  <!-- Mobile-first Container -->
+  <main class="w-full max-w-md flex flex-col gap-6">
+    
+    <!-- Top Bar / Navigation Header -->
+    <header class="flex items-center justify-between px-2">
+      <div class="flex flex-col">
+        <h1 class="text-3xl font-extrabold tracking-tight text-stone-900 flex items-center gap-2">
+          BetterMe <span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Beta</span>
+        </h1>
+        <p id="current-date" class="text-sm font-medium text-stone-500 mt-0.5">Monday, June 29</p>
+      </div>
+      
+      <!-- Sync Status Pill -->
+      <div id="sync-status" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold glass-panel text-stone-500 border border-stone-200 shadow-sm transition-all duration-300">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" id="sync-indicator"></span>
+        <span id="sync-text">Local Mode</span>
+      </div>
+    </header>
+    
+    <!-- Hero / KPI Progress Card -->
+    <section class="glass-panel rounded-[28px] p-6 flex flex-col gap-5 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-stone-800">Today's Focus</h2>
+        <span class="text-xs font-bold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-lg" id="completion-percentage">0% Done</span>
+      </div>
+      
+      <!-- Growth Meter -->
+      <div class="relative w-full h-3 bg-stone-200/60 rounded-full overflow-hidden">
+        <div id="progress-bar" class="absolute top-0 left-0 h-full w-[0%] bg-gradient-to-r from-indigo-500 to-teal-500 rounded-full transition-all duration-500 ease-out"></div>
+      </div>
+      
+      <!-- Today's Stats Cards -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="flex flex-col items-center justify-center p-3 rounded-2xl bg-stone-100/60 border border-stone-200/40">
+          <span class="text-xs font-semibold text-stone-500">Streak</span>
+          <span id="stat-streak" class="text-lg font-extrabold text-stone-800 mt-0.5">0d</span>
+        </div>
+        <div class="flex flex-col items-center justify-center p-3 rounded-2xl bg-stone-100/60 border border-stone-200/40">
+          <span class="text-xs font-semibold text-stone-500">Completed</span>
+          <span id="stat-completed" class="text-lg font-extrabold text-stone-800 mt-0.5">0/0</span>
+        </div>
+        <div class="flex flex-col items-center justify-center p-3 rounded-2xl bg-stone-100/60 border border-stone-200/40">
+          <span class="text-xs font-semibold text-stone-500">KPI Score</span>
+          <span id="stat-kpi" class="text-lg font-extrabold text-indigo-600 mt-0.5">0</span>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Tab Controls & List Section -->
+    <section class="flex flex-col gap-4">
+      <div class="flex justify-between items-center px-1">
+        <!-- Switch between habits and general to-dos -->
+        <nav class="flex gap-1 bg-stone-200/50 p-1 rounded-xl">
+          <button id="tab-habits" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white text-stone-800 shadow-sm" onclick="switchTab('habits')">Habits</button>
+          <button id="tab-todos" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-stone-500 hover:text-stone-700" onclick="switchTab('todos')">To-Dos</button>
+        </nav>
+        
+        <!-- Toggle button for showing active / completed tasks -->
+        <button id="btn-add-shortcut" class="p-2 rounded-xl text-stone-600 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all" onclick="focusInput()">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Add New Item Input Panel -->
+      <form id="add-form" class="flex gap-2 w-full p-2 glass-panel rounded-2xl border border-stone-200/80 shadow-sm">
+        <input type="text" id="item-input" placeholder="Add a new daily habit..." class="flex-1 px-3 py-2 bg-transparent text-sm text-stone-800 focus:outline-none placeholder-stone-400" required>
+        <button type="submit" class="flex items-center justify-center p-2 rounded-xl bg-stone-900 text-white hover:bg-indigo-600 active:scale-95 transition-all">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <!-- Active Habits / To-Do List Container -->
+      <div id="list-container" class="flex flex-col gap-2.5 min-h-[180px]">
+        <!-- Dynamic list content will be injected here by app.js -->
+        <div class="flex flex-col items-center justify-center py-12 text-stone-400 gap-2">
+          <i data-lucide="calendar-plus" class="w-8 h-8 opacity-60"></i>
+          <p class="text-xs font-semibold">No habits set up for today. Add one above!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Growth Chart Section -->
+    <section class="glass-panel rounded-[28px] p-6 border border-stone-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.015)] flex flex-col gap-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-base font-bold text-stone-800">Growth Index</h2>
+          <p class="text-xs text-stone-500 font-medium">Your progress history over the past 7 days</p>
+        </div>
+        <div class="flex items-center gap-1 text-teal-600 font-bold text-sm bg-teal-50 px-2 py-0.5 rounded-lg" id="growth-rate-badge">
+          <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+          <span id="growth-rate">+0%</span>
+        </div>
+      </div>
+      
+      <!-- Chart Canvas Container -->
+      <div class="relative w-full h-[180px] mt-2">
+        <canvas id="growthChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation Info / PWA install Banner (Hidden by default) -->
+    <footer id="pwa-install-banner" class="hidden glass-panel rounded-2xl p-4 border border-stone-200/80 shadow-md flex items-center justify-between gap-3 transition-all duration-300">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+          <i data-lucide="smartphone" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-stone-800">Install BetterMe</h4>
+          <p class="text-[10px] text-stone-500 leading-tight">Add to your Home Screen for app experience</p>
+        </div>
+      </div>
+      <button id="btn-install" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-all">Install</button>
+    </footer>
+    
+  </main>
+
+  <!-- Load Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- JavaScript Files -->
+  <script src="js/pwa.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
