@@ -5,17 +5,17 @@
   --font-title: 'Outfit', sans-serif;
   
   /* Soft, clean mood/tone color palette */
-  --bg-primary: #fafaf9; /* Stone 50 */
-  --bg-card: rgba(255, 255, 255, 0.75);
-  --text-main: #1c1917; /* Stone 900 */
-  --text-muted: #78716c; /* Stone 500 */
-  --color-primary: #6366f1; /* Indigo 500 */
-  --color-primary-light: #e0e7ff;
-  --color-secondary: #0d9488; /* Teal 600 */
-  --color-secondary-light: #ccfbf1;
+  --bg-primary: #f9fafb; /* Soft light gray */
+  --bg-card: rgba(255, 255, 255, 0.85); /* Clean card background */
+  --text-main: #111827; /* Gray 900 */
+  --text-muted: #6b7280; /* Gray 500 */
+  --color-primary: #10b981; /* Emerald 500 */
+  --color-primary-light: #d1fae5; /* Emerald 100 */
+  --color-secondary: #059669; /* Emerald 600 */
+  --color-secondary-light: #a7f3d0; /* Emerald 200 */
   --color-success: #10b981;
   --color-danger: #ef4444;
-  --radius-card: 24px;
+  --radius-card: 16px; /* rounded-2xl equivalent */
 }
 
 body {
@@ -23,54 +23,63 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-main);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.04) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(5, 150, 105, 0.04) 0px, transparent 50%);
   background-attachment: fixed;
   min-height: 100vh;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 /* Glassmorphism Panel */
 .glass-panel {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.015);
 }
 
 /* Interactive animations */
 .habit-item {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #ffffff;
+  border: 1px solid rgba(229, 231, 235, 0.4);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm equivalent */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.3s ease, 
+              border-color 0.3s ease, 
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.habit-item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(99, 102, 241, 0.2);
+.habit-item:not(.checked-active):hover {
+  transform: translateY(-2.5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  border-color: rgba(16, 185, 129, 0.25);
 }
+
 
 /* Checked styling with line-through animation */
 .checked-text {
   position: relative;
-  transition: color 0.25s ease;
+  transition: color 0.3s ease;
+  display: inline-block;
 }
 
 .checked-text::after {
   content: '';
   position: absolute;
   left: 0;
-  top: 50%;
+  top: 52%;
   width: 100%;
-  height: 1.5px;
+  height: 2px;
   background-color: var(--text-muted);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .checked-active .checked-text::after {
@@ -82,7 +91,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .checked-active {
-  opacity: 0.65;
+  opacity: 0.5 !important;
 }
 
 /* PWA Pull-to-refresh prevention on mobile */
@@ -104,4 +113,12 @@ html, body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #d6d3d1; /* Stone 300 */
+}
+
+/* KPI Chart Wrapper to prevent infinite height expansion */
+.kpi-chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  margin-top: 1rem;
 }

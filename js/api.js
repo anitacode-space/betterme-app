@@ -1,6 +1,8 @@
 // Cloudflare Worker API Endpoint Configuration
 // If empty, the app operates in Local Storage fallback mode
-const API_URL = 'https://betterme-api.betterme-app.workers.dev'; 
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8787'
+  : 'https://betterme-api.betterme-app.workers.dev';
 
 function isLocalMode() {
   return !API_URL;

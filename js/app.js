@@ -1,3 +1,6 @@
+let habitsList = [];
+const defaultHabits = [];
+
 let appState = {
   currentTab: 'habits',
   tasks: [],
@@ -15,15 +18,20 @@ function updateHeaderDate() {
 
 // Sync mode badge updater
 function updateSyncStatus() {
+  setSyncStatusIndicator(!BetterMeAPI.isLocalMode());
+}
+
+function setSyncStatusIndicator(synced) {
   const syncIndicator = document.getElementById('sync-indicator');
   const syncText = document.getElementById('sync-text');
+  if (!syncIndicator || !syncText) return;
   
-  if (BetterMeAPI.isLocalMode()) {
+  if (synced) {
+    syncIndicator.className = 'w-2 h-2 rounded-full bg-emerald-500';
+    syncText.textContent = 'Synced';
+  } else {
     syncIndicator.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
     syncText.textContent = 'Local Mode';
-  } else {
-    syncIndicator.className = 'w-2 h-2 rounded-full bg-teal-500';
-    syncText.textContent = 'Synced';
   }
 }
 
@@ -32,18 +40,9 @@ async function initApp() {
   updateHeaderDate();
   updateSyncStatus();
   
-  // Retrieve initial data
-  appState.tasks = await BetterMeAPI.getTasks();
-  appState.kpis = await BetterMeAPI.getKpiHistory();
+  // Retrieve initial data via live API fetch calls
+  await fetchHabits();
   
-  renderList();
-  await updateProgressMetrics();
-  
-  // Mount growth chart
-  if (window.updateGrowthChart) {
-    window.updateGrowthChart(appState.kpis);
-  }
-
   // Initialize Lucide icons
   if (window.lucide) {
     lucide.createIcons();
@@ -95,12 +94,12 @@ function renderList() {
   }
   
   container.innerHTML = filtered.map(item => `
-    <div class="habit-item flex items-center justify-between p-4 glass-panel rounded-2xl border border-stone-200/50 ${item.completed ? 'checked-active' : ''}" data-id="${item.id}">
+    <div class="habit-item flex items-center justify-between p-4 bg-white rounded-2xl border border-stone-200/40 shadow-sm ${item.completed ? 'checked-active' : ''}" data-id="${item.id}">
       <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="toggleItem('${item.id}')">
-        <div class="w-5 h-5 rounded-lg border-2 border-stone-300 flex items-center justify-center transition-all ${item.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'hover:border-indigo-400 bg-white'}">
-          ${item.completed ? '<i data-lucide="check" class="w-3.5 h-3.5 stroke-[3] text-white"></i>' : ''}
+        <div class="checkbox-box w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-stone-300 bg-white hover:border-emerald-400'}">
+          <i data-lucide="check" class="check-icon w-3.5 h-3.5 stroke-[3] text-white transition-all duration-300 ${item.completed ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}"></i>
         </div>
-        <span class="checked-text text-sm font-semibold text-stone-800">${item.text}</span>
+        <span class="checked-text text-sm font-semibold text-stone-800 select-none">${item.text}</span>
       </div>
       <button class="p-1 rounded-lg text-stone-400 hover:text-rose-500 hover:bg-rose-50/50 transition-all ml-2" onclick="deleteItem('${item.id}')">
         <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -176,34 +175,144 @@ async function updateProgressMetrics() {
   }
 }
 
-// Handle interactive item clicks
-async function toggleItem(id) {
+// ==========================================
+// live Cloudflare Worker API & D1 database integration with LocalStorage Fallback
+// ==========================================
+
+async function fetchHabits() {
+  try {
+    const res = await fetch(`${API_URL}/api/tasks`);
+    if (!res.ok) throw new Error('Failed to fetch tasks');
+    appState.tasks = await res.json();
+    setSyncStatusIndicator(true);
+  } catch (err) {
+    console.warn('API error fetching habits, falling back to LocalStorage:', err);
+    appState.tasks = JSON.parse(localStorage.getItem('betterme_tasks') || '[]');
+    setSyncStatusIndicator(false);
+  }
+  habitsList = appState.tasks;
+  renderList();
+  await updateProgressMetrics();
+}
+
+async function addHabit(text) {
+  const tempItem = {
+    id: '_' + Math.random().toString(36).substr(2, 9),
+    text: text,
+    type: appState.currentTab,
+    completed: false,
+    timestamp: new Date().toISOString()
+  };
+  
+  try {
+    const res = await fetch(`${API_URL}/api/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tempItem)
+    });
+    if (!res.ok) throw new Error('Failed to add habit');
+    const saved = await res.json();
+    setSyncStatusIndicator(true);
+    await fetchHabits();
+    return saved;
+  } catch (err) {
+    console.warn('API error adding habit, saving to LocalStorage:', err);
+    const localTasks = JSON.parse(localStorage.getItem('betterme_tasks') || '[]');
+    localTasks.push(tempItem);
+    localStorage.setItem('betterme_tasks', JSON.stringify(localTasks));
+    setSyncStatusIndicator(false);
+    await fetchHabits();
+    return tempItem;
+  }
+}
+
+async function toggleHabit(id) {
   const item = appState.tasks.find(t => t.id === id);
   if (!item) return;
   
   item.completed = !item.completed;
   
-  // Instant visual feedback
+  // Instant visual feedback in-place
   const el = document.querySelector(`[data-id="${id}"]`);
   if (el) {
+    const checkboxBox = el.querySelector('.checkbox-box');
+    const checkIcon = el.querySelector('.check-icon');
+    
     if (item.completed) {
       el.classList.add('checked-active');
+      if (checkboxBox) {
+        checkboxBox.classList.remove('border-stone-300', 'bg-white', 'hover:border-emerald-400');
+        checkboxBox.classList.add('bg-emerald-500', 'border-emerald-500');
+      }
+      if (checkIcon) {
+        checkIcon.classList.remove('scale-0', 'opacity-0');
+        checkIcon.classList.add('scale-100', 'opacity-100');
+      }
     } else {
       el.classList.remove('checked-active');
+      if (checkboxBox) {
+        checkboxBox.classList.add('border-stone-300', 'bg-white', 'hover:border-emerald-400');
+        checkboxBox.classList.remove('bg-emerald-500', 'border-emerald-500');
+      }
+      if (checkIcon) {
+        checkIcon.classList.remove('scale-100', 'opacity-100');
+        checkIcon.classList.add('scale-0', 'opacity-0');
+      }
     }
   }
   
-  await BetterMeAPI.saveTask(item);
-  await updateProgressMetrics();
-  renderList();
+  try {
+    const res = await fetch(`${API_URL}/api/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    if (!res.ok) throw new Error('Failed to toggle habit');
+    setSyncStatusIndicator(true);
+    await updateProgressMetrics();
+  } catch (err) {
+    console.warn('API error toggling habit, saving to LocalStorage:', err);
+    const localTasks = JSON.parse(localStorage.getItem('betterme_tasks') || '[]');
+    const idx = localTasks.findIndex(t => t.id === id);
+    if (idx !== -1) {
+      localTasks[idx].completed = item.completed;
+    } else {
+      localTasks.push(item);
+    }
+    localStorage.setItem('betterme_tasks', JSON.stringify(localTasks));
+    setSyncStatusIndicator(false);
+    await updateProgressMetrics();
+  }
+}
+
+async function deleteHabit(id) {
+  try {
+    const res = await fetch(`${API_URL}/api/tasks/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete habit');
+    setSyncStatusIndicator(true);
+    await fetchHabits();
+  } catch (err) {
+    console.warn('API error deleting habit, updating LocalStorage:', err);
+    const localTasks = JSON.parse(localStorage.getItem('betterme_tasks') || '[]');
+    const filtered = localTasks.filter(t => t.id !== id);
+    localStorage.setItem('betterme_tasks', JSON.stringify(filtered));
+    setSyncStatusIndicator(false);
+    await fetchHabits();
+  }
+}
+
+
+
+// Handle interactive item clicks
+async function toggleItem(id) {
+  await toggleHabit(id);
 }
 
 // Handle delete clicks
 async function deleteItem(id) {
-  appState.tasks = appState.tasks.filter(t => t.id !== id);
-  renderList();
-  await BetterMeAPI.deleteTask(id);
-  await updateProgressMetrics();
+  await deleteHabit(id);
 }
 
 // Form submit event hook
@@ -213,26 +322,8 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
   const text = input.value.trim();
   if (!text) return;
   
-  const tempItem = {
-    text: text,
-    type: appState.currentTab,
-    completed: false,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Optimistic UI updates
-  appState.tasks.push(tempItem);
-  renderList();
   input.value = '';
-  
-  const saved = await BetterMeAPI.saveTask(tempItem);
-  const idx = appState.tasks.findIndex(t => t.timestamp === tempItem.timestamp);
-  if (idx !== -1) {
-    appState.tasks[idx] = saved;
-  }
-  
-  renderList();
-  await updateProgressMetrics();
+  await addHabit(text);
 });
 
 // Helper inputs
@@ -246,6 +337,10 @@ window.switchTab = switchTab;
 window.toggleItem = toggleItem;
 window.deleteItem = deleteItem;
 window.focusInput = focusInput;
+window.fetchHabits = fetchHabits;
+window.addHabit = addHabit;
+window.toggleHabit = toggleHabit;
+window.deleteHabit = deleteHabit;
 
 // Start app binding
 window.addEventListener('DOMContentLoaded', initApp);

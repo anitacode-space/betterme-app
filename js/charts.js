@@ -47,7 +47,7 @@ function updateGrowthRateBadge(values) {
   if (avg === 0) {
     if (lastVal > 0) {
       rateSpan.textContent = `+${Math.round(lastVal)}%`;
-      rateBadge.className = 'flex items-center gap-1 text-teal-600 font-bold text-xs bg-teal-50 px-2 py-0.5 rounded-lg';
+      rateBadge.className = 'flex items-center gap-1 text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded-lg';
     } else {
       rateSpan.textContent = 'Steady';
       rateBadge.className = 'flex items-center gap-1 text-stone-500 font-bold text-xs bg-stone-100 px-2 py-0.5 rounded-lg';
@@ -60,7 +60,7 @@ function updateGrowthRateBadge(values) {
 
   if (diff > 0) {
     rateSpan.textContent = `+${percentage}%`;
-    rateBadge.className = 'flex items-center gap-1 text-teal-600 font-bold text-xs bg-teal-50 px-2 py-0.5 rounded-lg';
+    rateBadge.className = 'flex items-center gap-1 text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded-lg';
   } else if (diff < 0) {
     rateSpan.textContent = `${percentage}%`;
     rateBadge.className = 'flex items-center gap-1 text-rose-600 font-bold text-xs bg-rose-50 px-2 py-0.5 rounded-lg';
@@ -78,10 +78,11 @@ function drawGrowthChart(kpiData) {
   const ctx = canvas.getContext('2d');
   const processed = getProcessedChartData(kpiData);
 
-  // Gradient fill underneath the growth line
+  // Gradient fill underneath the growth line (multi-stop for smooth fading)
   const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-  gradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)'); // Indigo
-  gradient.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
+  gradient.addColorStop(0, 'rgba(16, 185, 129, 0.18)'); // Soft Emerald
+  gradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.06)');
+  gradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
 
   const config = {
     type: 'line',
@@ -90,16 +91,16 @@ function drawGrowthChart(kpiData) {
       datasets: [{
         label: 'Growth Index',
         data: processed.values,
-        borderColor: '#6366f1',
+        borderColor: '#10b981', // Emerald 500
         borderWidth: 2.5,
         pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#6366f1',
+        pointBorderColor: '#10b981', // Emerald 500
         pointBorderWidth: 2,
         pointRadius: 4,
         pointHoverRadius: 6,
         pointHoverBorderWidth: 3,
         pointHoverBackgroundColor: '#ffffff',
-        tension: 0.35,
+        tension: 0.4, // Smoother line transition
         fill: true,
         backgroundColor: gradient,
       }]
@@ -112,7 +113,7 @@ function drawGrowthChart(kpiData) {
           display: false
         },
         tooltip: {
-          backgroundColor: '#1c1917',
+          backgroundColor: '#111827', // Gray 900
           titleFont: { family: 'Inter', weight: 'bold', size: 11 },
           bodyFont: { family: 'Inter', size: 11 },
           padding: 8,
@@ -127,26 +128,35 @@ function drawGrowthChart(kpiData) {
       },
       scales: {
         x: {
+          border: {
+            display: false // Hides X-axis border line
+          },
           grid: {
             display: false
           },
           ticks: {
             font: { family: 'Inter', size: 9 },
-            color: '#78716c'
+            color: '#9ca3af', // Gray 400
+            padding: 6
           }
         },
         y: {
           min: 0,
           max: 100,
+          border: {
+            display: false // Hides Y-axis border line
+          },
           ticks: {
             stepSize: 25,
             font: { family: 'Inter', size: 9 },
-            color: '#78716c',
+            color: '#9ca3af', // Gray 400
+            padding: 8,
             callback: (val) => `${val}%`
           },
           grid: {
-            color: 'rgba(231, 229, 228, 0.6)',
-            lineWidth: 0.5
+            color: 'rgba(229, 231, 235, 0.25)', // Extremely faint gray
+            drawTicks: false,
+            lineWidth: 1
           }
         }
       }
